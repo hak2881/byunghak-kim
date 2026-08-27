@@ -4,6 +4,10 @@ import test from "node:test";
 
 const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
 const css = await readFile(new URL("../styles.css", import.meta.url), "utf8");
+const robots = await readFile(new URL("../robots.txt", import.meta.url), "utf8");
+const sitemap = await readFile(new URL("../sitemap.xml", import.meta.url), "utf8");
+const vercel = JSON.parse(await readFile(new URL("../vercel.json", import.meta.url), "utf8"));
+const favicon = await readFile(new URL("../favicon.svg", import.meta.url), "utf8");
 
 test("contains the approved semantic sections and identity", () => {
   for (const token of [
@@ -67,4 +71,21 @@ test("implements focus, responsive, reduced-motion, and print contracts", () => 
   assert.match(css, /@media\s+print/);
   assert.match(css, /\.skip-link/);
   assert.match(css, /\.sr-only/);
+});
+
+test("publishes canonical social metadata", () => {
+  assert.match(html, /rel="canonical" href="https:\/\/byunghak-kim\.vercel\.app\/"/);
+  assert.match(html, /property="og:image" content="https:\/\/byunghak-kim\.vercel\.app\/og\.png"/);
+  assert.match(html, /name="twitter:card" content="summary_large_image"/);
+});
+
+test("publishes crawl and security contracts", () => {
+  assert.match(robots, /Allow: \/\s/);
+  assert.match(sitemap, /https:\/\/byunghak-kim\.vercel\.app\//);
+  assert.ok(vercel.headers.some((entry) => entry.source === "/(.*)"));
+});
+
+test("links a local privacy-safe SVG favicon", () => {
+  assert.match(html, /<link rel="icon" href="\/favicon\.svg" type="image\/svg\+xml">/);
+  assert.match(favicon, /<svg[^>]+xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
 });
