@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
+const css = await readFile(new URL("../styles.css", import.meta.url), "utf8");
 
 test("contains the approved semantic sections and identity", () => {
   for (const token of [
@@ -57,4 +58,13 @@ test("translates visible role and stack labels", () => {
 test("translates the hero role and current-role period", () => {
   assert.match(html, /<p class="eyebrow" data-i18n="hero\.role" data-ko="백엔드 &amp; 클라우드 엔지니어" data-en="Backend &amp; Cloud Engineer">백엔드 &amp; 클라우드 엔지니어<\/p>/);
   assert.match(html, /<p class="period" data-i18n="work\.production\.period" data-ko="2025\.11 — 현재 · NDA" data-en="2025\.11 — Present · NDA">2025\.11 — 현재 · NDA<\/p>/);
+});
+
+test("implements focus, responsive, reduced-motion, and print contracts", () => {
+  assert.match(css, /:focus-visible/);
+  assert.match(css, /@media\s*\(max-width:\s*720px\)/);
+  assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
+  assert.match(css, /@media\s+print/);
+  assert.match(css, /\.skip-link/);
+  assert.match(css, /\.sr-only/);
 });
