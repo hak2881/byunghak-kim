@@ -24,26 +24,41 @@ export async function copyText(text, clipboard) {
   }
 }
 
-if (typeof document !== "undefined") {
+export function initializeResume(root, { storage, clipboard, print, navigate } = {}) {
   const storageKey = "resume-language";
   let language;
-  try { language = resolveLanguage(localStorage.getItem(storageKey)); }
+  try { language = resolveLanguage(storage?.getItem(storageKey)); }
   catch { language = "ko"; }
-  applyLanguage(document, language);
+  applyLanguage(root, language);
 
-  document.getElementById("language-toggle")?.addEventListener("click", () => {
+  root.getElementById("language-toggle")?.addEventListener("click", () => {
     language = language === "ko" ? "en" : "ko";
-    applyLanguage(document, language);
-    try { localStorage.setItem(storageKey, language); } catch {}
+    applyLanguage(root, language);
+    try { storage?.setItem(storageKey, language); } catch {}
   });
 
-  document.getElementById("print-button")?.addEventListener("click", () => window.print());
+  root.getElementById("print-button")?.addEventListener("click", () => print?.());
 
-  document.getElementById("email-link")?.addEventListener("click", async (event) => {
-    const copied = await copyText("gkr054@naver.com", navigator.clipboard);
-    if (!copied) return;
+  const email = root.getElementById("email-link");
+  email?.addEventListener("click", async (event) => {
     event.preventDefault();
-    const status = document.getElementById("copy-status");
+    const copied = await copyText("gkr054@naver.com", clipboard);
+    if (!copied) {
+      navigate?.(email.href);
+      return;
+    }
+    const status = root.getElementById("copy-status");
     if (status) status.textContent = language === "ko" ? "이메일 주소를 복사했습니다." : "Email address copied.";
+  });
+}
+
+if (typeof document !== "undefined") {
+  let storage;
+  try { storage = localStorage; } catch {}
+  initializeResume(document, {
+    storage,
+    clipboard: navigator.clipboard,
+    print: () => window.print(),
+    navigate: (url) => window.location.assign(url),
   });
 }
