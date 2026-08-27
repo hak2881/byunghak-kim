@@ -53,3 +53,8 @@ test("translates visible role and stack labels", () => {
     'data-i18n="stack.cloud"',
   ]) assert.match(html, new RegExp(token));
 });
+
+test("translates the hero role and current-role period", () => {
+  assert.match(html, /<p class="eyebrow" data-i18n="hero\.role" data-ko="백엔드 &amp; 클라우드 엔지니어" data-en="Backend &amp; Cloud Engineer">백엔드 &amp; 클라우드 엔지니어<\/p>/);
+  assert.match(html, /<p class="period" data-i18n="work\.production\.period" data-ko="2025\.11 — 현재 · NDA" data-en="2025\.11 — Present · NDA">2025\.11 — 현재 · NDA<\/p>/);
+});
