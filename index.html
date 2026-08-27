@@ -23,7 +23,7 @@
   <a class="skip-link" href="#main" data-i18n="skip" data-ko="본문으로 건너뛰기" data-en="Skip to content">본문으로 건너뛰기</a>
   <header class="site-header">
     <a class="identity" href="#top">김병학 <span aria-hidden="true">·</span> BYUNGHAK KIM</a>
-    <nav aria-label="주요 메뉴">
+    <nav aria-label="주요 메뉴" data-aria-label-ko="주요 메뉴" data-aria-label-en="Primary navigation">
       <a href="#work" data-i18n="nav.work" data-ko="경력" data-en="Work">경력</a>
       <a href="#engineering" data-i18n="nav.engineering" data-ko="기술" data-en="Engineering">기술</a>
       <a href="#about" data-i18n="nav.about" data-ko="소개" data-en="About">소개</a>
@@ -42,7 +42,7 @@
       <div class="hero-links"><span>South Korea</span><a id="email-link" href="mailto:gkr054@naver.com">gkr054@naver.com</a><a href="https://github.com/hak2881" rel="me">github.com/hak2881</a></div>
     </section>
 
-    <section class="evidence" aria-label="대표 성과">
+    <section class="evidence" aria-label="대표 성과" data-aria-label-ko="대표 성과" data-aria-label-en="Key outcomes">
       <article><strong>7,732ms → 283ms</strong><span data-i18n="metric.category" data-ko="다중 카테고리 필터" data-en="Multi-category filtering">다중 카테고리 필터</span></article>
       <article><strong>4,857ms → 11ms</strong><span data-i18n="metric.price" data-ko="가격 범위 필터" data-en="Price-range filtering">가격 범위 필터</span></article>
       <article><strong>235K+</strong><span data-i18n="metric.backfill" data-ko="상품 메타데이터 백필" data-en="Product metadata backfill">상품 메타데이터 백필</span></article>
@@ -120,7 +120,10 @@
     </section>
   </main>
 
-  <footer><p data-i18n="footer.nda" data-ko="회사와 고객 식별정보는 NDA와 개인정보 보호를 위해 제외했습니다." data-en="Employer and client identifiers are omitted for NDA and privacy reasons.">회사와 고객 식별정보는 NDA와 개인정보 보호를 위해 제외했습니다.</p></footer>
+  <footer>
+    <p class="footer-links"><a href="mailto:gkr054@naver.com">gkr054@naver.com</a><a href="https://github.com/hak2881" rel="me">github.com/hak2881</a></p>
+    <p data-i18n="footer.nda" data-ko="회사와 고객 식별정보는 NDA와 개인정보 보호를 위해 제외했습니다." data-en="Employer and client identifiers are omitted for NDA and privacy reasons.">회사와 고객 식별정보는 NDA와 개인정보 보호를 위해 제외했습니다.</p>
+  </footer>
   <p id="copy-status" class="sr-only" role="status" aria-live="polite"></p>
 </body>
 </html>

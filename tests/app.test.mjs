@@ -20,6 +20,14 @@ function createElement({ dataset = {}, textContent = "", href = "" } = {}) {
 
 function createRoot() {
   const translated = createElement({ dataset: { ko: "기술", en: "Engineering" }, textContent: "기술" });
+  const navigation = createElement({
+    dataset: { ariaLabelKo: "주요 메뉴", ariaLabelEn: "Primary navigation" },
+    textContent: "경력 기술 소개",
+  });
+  const evidence = createElement({
+    dataset: { ariaLabelKo: "대표 성과", ariaLabelEn: "Key outcomes" },
+    textContent: "7,732ms → 283ms",
+  });
   const nodes = {
     "language-toggle": createElement(),
     "print-button": createElement(),
@@ -28,9 +36,10 @@ function createRoot() {
   };
   return {
     documentElement: { lang: "ko" },
-    querySelectorAll: () => [translated],
+    querySelectorAll: (selector) => selector === "[data-i18n]" ? [translated] : [navigation, evidence],
     getElementById: (id) => nodes[id] ?? null,
     translated,
+    landmarks: { navigation, evidence },
     nodes,
   };
 }
@@ -46,7 +55,7 @@ test("applies translated text and document language", () => {
   const node = { dataset: { ko: "기술", en: "Engineering" }, textContent: "기술" };
   const root = {
     documentElement: { lang: "ko" },
-    querySelectorAll: () => [node],
+    querySelectorAll: (selector) => selector === "[data-i18n]" ? [node] : [],
     getElementById: () => null,
   };
   applyLanguage(root, "en");
@@ -77,6 +86,18 @@ test("toggle updates copy, ARIA state, and persisted language", async () => {
   assert.equal(root.nodes["language-toggle"].attributes["aria-pressed"], "true");
   assert.equal(root.nodes["language-toggle"].attributes["aria-label"], "한국어로 전환");
   assert.deepEqual(saved, [["resume-language", "en"]]);
+});
+
+test("toggle translates landmark labels without replacing their child content", async () => {
+  const root = createRoot();
+  initializeResume(root, { storage: { getItem: () => null } });
+
+  await root.nodes["language-toggle"].trigger("click");
+
+  assert.equal(root.landmarks.navigation.attributes["aria-label"], "Primary navigation");
+  assert.equal(root.landmarks.evidence.attributes["aria-label"], "Key outcomes");
+  assert.equal(root.landmarks.navigation.textContent, "경력 기술 소개");
+  assert.equal(root.landmarks.evidence.textContent, "7,732ms → 283ms");
 });
 
 test("print control calls the injected print boundary", async () => {

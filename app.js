@@ -7,6 +7,9 @@ export function applyLanguage(root, language) {
   for (const node of root.querySelectorAll("[data-i18n]")) {
     node.textContent = node.dataset[language];
   }
+  for (const node of root.querySelectorAll("[data-aria-label-ko][data-aria-label-en]")) {
+    node.setAttribute("aria-label", node.dataset[language === "ko" ? "ariaLabelKo" : "ariaLabelEn"]);
+  }
   const toggle = root.getElementById("language-toggle");
   if (toggle) {
     toggle.setAttribute("aria-pressed", String(language === "en"));

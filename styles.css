@@ -36,7 +36,7 @@ nav a { color: var(--muted); font-size: .84rem; font-weight: 700; text-decoratio
 button { min-height: 40px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink); padding: 0 14px; font: inherit; font-size: .78rem; font-weight: 750; cursor: pointer; }
 .eyebrow, .resume-section > h2 { color: var(--accent); font-size: .78rem; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
 .hero-summary { max-width: 720px; color: var(--muted); font-size: clamp(1rem, 1.5vw, 1.2rem); }
-.hero-links, .stack-groups { display: flex; flex-wrap: wrap; gap: 12px 24px; margin-top: 28px; }
+.hero-links, .footer-links, .stack-groups { display: flex; flex-wrap: wrap; gap: 12px 24px; margin-top: 28px; }
 .timeline-item { padding-bottom: 28px; }
 .period { color: var(--muted); font-size: .78rem; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
 .system-card h3 { margin-top: 0; }
@@ -59,7 +59,8 @@ footer { color: var(--muted); font-size: .82rem; }
 
 @media print {
   @page { size: A4; margin: 14mm; }
-  .site-header, .skip-link, button { display: none !important; }
+  .site-header { position: static; max-width: none; padding: 0 0 6mm; background: none; }
+  .site-header nav, .header-actions, .skip-link, button { display: none !important; }
   .hero, .resume-section, footer { max-width: none; padding: 10mm 0; }
   .system-card, .timeline-item { break-inside: avoid; }
   a { text-decoration: none; }

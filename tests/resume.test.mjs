@@ -73,6 +73,29 @@ test("implements focus, responsive, reduced-motion, and print contracts", () => 
   assert.match(css, /\.sr-only/);
 });
 
+test("keeps the sole visible identity in print while hiding header controls", () => {
+  assert.match(html, /<header class="site-header">[\s\S]*?<a class="identity"[^>]*>김병학[\s\S]*?BYUNGHAK KIM<\/a>/);
+  const printRules = css.slice(css.indexOf("@media print"));
+  const siteHeaderRule = [...printRules.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+    .find(([, selectors]) => selectors.split(",").map((selector) => selector.trim()).includes(".site-header"));
+  assert.ok(siteHeaderRule);
+  assert.doesNotMatch(siteHeaderRule[2], /display:\s*none/);
+  assert.match(printRules, /\.site-header\s+nav[^{}]*\{[^}]*display:\s*none\s*!important/);
+  assert.match(printRules, /\.header-actions[^{}]*\{[^}]*display:\s*none\s*!important/);
+});
+
+test("provides paired landmark labels for Korean and English", () => {
+  assert.match(html, /<nav[^>]*data-aria-label-ko="주요 메뉴"[^>]*data-aria-label-en="Primary navigation"/);
+  assert.match(html, /<section class="evidence"[^>]*data-aria-label-ko="대표 성과"[^>]*data-aria-label-en="Key outcomes"/);
+});
+
+test("footer repeats the approved contact links with the privacy notice", () => {
+  const footer = html.match(/<footer>[\s\S]*?<\/footer>/)?.[0] ?? "";
+  assert.match(footer, /href="mailto:gkr054@naver\.com"[^>]*>gkr054@naver\.com<\/a>/);
+  assert.match(footer, /href="https:\/\/github\.com\/hak2881"[^>]*>github\.com\/hak2881<\/a>/);
+  assert.match(footer, /data-i18n="footer\.nda"/);
+});
+
 test("publishes canonical social metadata", () => {
   assert.match(html, /rel="canonical" href="https:\/\/byunghak-kim\.vercel\.app\/"/);
   assert.match(html, /property="og:image" content="https:\/\/byunghak-kim\.vercel\.app\/og\.png"/);
