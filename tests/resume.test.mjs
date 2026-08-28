@@ -182,6 +182,13 @@ test("includes the approved learning practice in both languages", () => {
   );
 });
 
+test("shows the completed OZ backend program before university education", () => {
+  const about = html.match(/<section id="about"[\s\S]*?<\/section>/)?.[0] ?? "";
+  assert.match(about, /data-i18n="education\.oz\.period" data-ko="2024\.11 — 2025\.05" data-en="2024\.11 — 2025\.05"/);
+  assert.match(about, /data-i18n="education\.oz\.program" data-ko="OZ 코딩스쿨 · 백엔드 개발 과정 수료" data-en="OZ Coding School · Backend Development Program · Completed"/);
+  assert.ok(about.indexOf("education.oz.program") < about.indexOf("education.school"));
+});
+
 test("implements focus, responsive, reduced-motion, and print contracts", () => {
   assert.match(css, /:focus-visible/);
   assert.match(css, /@media\s*\(max-width:\s*720px\)/);
