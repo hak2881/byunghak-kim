@@ -236,7 +236,7 @@ test("links a local privacy-safe SVG favicon", () => {
   assert.match(favicon, /<svg[^>]+xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
 });
 
-test("prints Korean and English resumes on two A4 pages", {
+test("renders the approved compact bilingual layout", {
   skip: process.env.PRINT_AUDIT !== "1",
 }, async () => {
   const root = new URL("..", import.meta.url);
@@ -277,6 +277,54 @@ test("prints Korean and English resumes on two A4 pages", {
     browser = await chromium.launch({ channel: "chrome", headless: true });
     const page = await browser.newPage();
     await page.goto(`http://127.0.0.1:${port}`);
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const desktop = await page.evaluate(() => ({
+      titleFont: Number.parseFloat(getComputedStyle(document.querySelector("#hero-title")).fontSize),
+      evidenceTop: Math.round(document.querySelector(".evidence").getBoundingClientRect().top),
+      workTop: Math.round(document.querySelector("#work").getBoundingClientRect().top),
+      overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    }));
+    assert.ok(desktop.titleFont <= 68, `desktop title is ${desktop.titleFont}px`);
+    assert.ok(desktop.evidenceTop <= 520, `desktop evidence starts at ${desktop.evidenceTop}px`);
+    assert.ok(desktop.workTop <= 700, `desktop work starts at ${desktop.workTop}px`);
+    assert.equal(desktop.overflow, false);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    const mobile = await page.evaluate(() => ({
+      titleFont: Number.parseFloat(getComputedStyle(document.querySelector("#hero-title")).fontSize),
+      titleLines: (() => {
+        const text = document.querySelector("#hero-title").firstChild;
+        const lines = [];
+        for (let index = 0; index < text.length; index += 1) {
+          const range = document.createRange();
+          range.setStart(text, index);
+          range.setEnd(text, index + 1);
+          const top = Math.round(range.getBoundingClientRect().top);
+          const line = lines.find((entry) => entry.top === top);
+          if (line) line.text += text.textContent[index];
+          else lines.push({ top, text: text.textContent[index] });
+        }
+        return lines.map((line) => line.text.trim());
+      })(),
+      evidenceTop: Math.round(document.querySelector(".evidence").getBoundingClientRect().top),
+      metricLines: [...document.querySelectorAll(".evidence strong")].map((element) => {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        return range.getClientRects().length;
+      }),
+      overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    }));
+    assert.ok(mobile.titleFont <= 36, `mobile title is ${mobile.titleFont}px`);
+    assert.equal(
+      mobile.titleLines.some((line) => line.endsWith("백") || line.startsWith("엔드")),
+      false,
+      `awkward Korean title wrap: ${mobile.titleLines.join(" / ")}`,
+    );
+    assert.ok(mobile.evidenceTop <= 520, `mobile evidence starts at ${mobile.evidenceTop}px`);
+    assert.deepEqual(mobile.metricLines, [1, 1, 1, 1]);
+    assert.equal(mobile.overflow, false);
+
     await page.pdf({ path: pdfPath("ko"), preferCSSPageSize: true, printBackground: true });
     await page.locator("#language-toggle").click();
     await page.pdf({ path: pdfPath("en"), preferCSSPageSize: true, printBackground: true });
