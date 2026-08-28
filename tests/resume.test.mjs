@@ -83,6 +83,7 @@ test("every translated element has Korean and English copy", () => {
     "work.internship.pipeline",
     "work.internship.validation",
     "work.internship.reporting",
+    "work.internship.period",
     "systems.intro",
     "system.commerce.model",
     "system.commerce.results",
@@ -116,6 +117,19 @@ test("shows detailed contributions for both experience entries", () => {
   assert.equal([...html.matchAll(/<ul class="achievement-list">/g)].length, 2);
   assert.ok([...html.matchAll(/<ul class="achievement-list">[\s\S]*?<\/ul>/g)]
     .every((match) => [...match[0].matchAll(/<li /g)].length >= 3));
+});
+
+test("shows the approved employer context in both languages", () => {
+  const work = html.match(/<section id="work"[\s\S]*?<\/section>/)?.[0] ?? "";
+  assert.match(work, /data-ko="Lukuku · 백엔드 &amp; 클라우드 엔지니어"/);
+  assert.match(work, /data-en="Lukuku · Backend &amp; Cloud Engineer"/);
+  assert.match(work, /data-ko="Logblack · AI 엔지니어 인턴"/);
+  assert.match(work, /data-en="Logblack · AI Engineering Intern"/);
+  assert.match(work, /data-ko="2025\.11 — 현재" data-en="2025\.11 — Present"/);
+  assert.match(work, /data-ko="2025\.05 — 2025\.08 · 3개월" data-en="2025\.05 — 2025\.08 · 3 months"/);
+  assert.doesNotMatch(work, /NDA/);
+  assert.match(html, /data-ko="고객사와 내부 식별정보는 NDA와 개인정보 보호를 위해 제외했습니다\."/);
+  assert.match(html, /data-en="Client and internal identifiers are omitted for NDA and privacy reasons\."/);
 });
 
 test("explains every selected system with details and technologies", () => {
@@ -158,7 +172,7 @@ test("translates visible role and stack labels", () => {
 
 test("translates the hero role and current-role period", () => {
   assert.match(html, /<p class="eyebrow" data-i18n="hero\.role" data-ko="백엔드 &amp; 클라우드 엔지니어" data-en="Backend &amp; Cloud Engineer">백엔드 &amp; 클라우드 엔지니어<\/p>/);
-  assert.match(html, /<p class="period" data-i18n="work\.production\.period" data-ko="2025\.11 — 현재 · NDA" data-en="2025\.11 — Present · NDA">2025\.11 — 현재 · NDA<\/p>/);
+  assert.match(html, /<p class="period" data-i18n="work\.production\.period" data-ko="2025\.11 — 현재" data-en="2025\.11 — Present">2025\.11 — 현재<\/p>/);
 });
 
 test("implements focus, responsive, reduced-motion, and print contracts", () => {
