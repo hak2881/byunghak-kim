@@ -75,6 +75,7 @@ footer { color: var(--muted); font-size: .82rem; }
 @media print {
   @page { size: A4; margin: 10mm; }
   body { color: #000; font-size: 8.5pt; line-height: 1.35; }
+  html[lang="en"] body { zoom: .85; }
   .site-header { position: static; max-width: none; padding: 0 0 3mm; background: none; }
   .site-header nav, .header-actions, .skip-link, button { display: none !important; }
   .hero, .resume-section, footer { max-width: none; padding: 5mm 0; }

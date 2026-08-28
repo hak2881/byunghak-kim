@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { createServer } from "node:http";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
+import { pathToFileURL } from "node:url";
 
 const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
 const css = await readFile(new URL("../styles.css", import.meta.url), "utf8");
@@ -22,14 +27,24 @@ test("contains the approved semantic sections and identity", () => {
 });
 
 test("contains the verified backend evidence", () => {
-  for (const metric of ["7,732", "283", "4,857", "11", "1,569", "2ms", "235,848", "0.04%", "1,067"])
-    assert.match(html, new RegExp(metric.replace("+", "\\+")));
+  for (const metric of ["7,732ms → 283ms", "4,857ms → 11ms", "1,569ms → 2ms", "235,848", "0.04%", "1,067"])
+    assert.ok(html.includes(metric), `missing exact metric: ${metric}`);
 });
 
 test("does not expose disallowed personal data or unsupported ownership", () => {
   assert.doesNotMatch(html, /01[016789][ -]?\d{3,4}[ -]?\d{4}/);
-  assert.doesNotMatch(html, /생년월일|date of birth|고등학교|high school/i);
-  assert.doesNotMatch(html, /스토어프론트(?:를| 전체를)? (?:설계|운영)|owned the entire storefront/i);
+  assert.doesNotMatch(html, /생년월일|date of birth|고등학교|high school|나이|\bage\b|사진|\bphoto\b/i);
+  assert.doesNotMatch(html, /젠테|gente|슬랙|slack|private repo|비공개 저장소/i);
+  assert.doesNotMatch(html, /arn:aws|amazonaws\.com|\b\d{12}\b|\b(?:\d{1,3}\.){3}\d{1,3}\b/i);
+  assert.doesNotMatch(html, /스토어프론트[^<"]{0,100}(?:설계|구축|개발|운영|주도)|storefront[^<"]{0,100}(?:owned|led|architected|designed|built|operated)/i);
+  assert.match(html, /호스팅형 스토어프론트의 구조와 API 데이터 흐름을 이해하고, 짧은 기간 필터 상태와 API 연동 수정을 지원했습니다/);
+  assert.match(html, /Understood the hosted storefront structure and API data flow, providing short-term support for filter state and API integration changes/);
+
+  const externalUrls = [...html.matchAll(/https:\/\/[^"'\s<]+/g)].map((match) => match[0]);
+  assert.ok(externalUrls.length > 0);
+  for (const url of externalUrls) {
+    assert.match(url, /^https:\/\/(?:byunghak-kim\.vercel\.app(?:\/og\.png|\/)?|github\.com\/hak2881(?:\/[a-z0-9-]+)?)$/);
+  }
 });
 
 test("every translated element has Korean and English copy", () => {
@@ -39,9 +54,45 @@ test("every translated element has Korean and English copy", () => {
     assert.match(node, /data-ko="[^"]+"/);
     assert.match(node, /data-en="[^"]+"/);
   }
+
+  const keys = new Set(nodes.map((node) => node.match(/data-i18n="([^"]+)"/)?.[1]));
+  for (const key of [
+    "work.production.search",
+    "work.production.backfill",
+    "work.production.reliability",
+    "work.production.operations",
+    "work.internship.pipeline",
+    "work.internship.validation",
+    "work.internship.reporting",
+    "systems.intro",
+    "system.commerce.model",
+    "system.commerce.results",
+    "system.commerce.cache",
+    "system.commerce.storefront",
+    "system.ledger.integer",
+    "system.ledger.idempotency",
+    "system.ledger.outbox",
+    "system.ai.capture",
+    "system.ai.queue",
+    "system.ai.delivery",
+    "system.erp.orders",
+    "system.erp.freight",
+    "system.erp.recovery",
+    "public.intro",
+    "public.patterns",
+    "public.commerce",
+    "public.ledger",
+    "public.erp",
+    "public.ai",
+    "public.aws",
+    "stack.reliability",
+    "stack.integration",
+  ]) assert.ok(keys.has(key), `missing translation key: ${key}`);
 });
 
 test("shows detailed contributions for both experience entries", () => {
+  const work = html.match(/<section id="work"[\s\S]*?<\/section>/)?.[0] ?? "";
+  assert.match(work, /<div class="timeline">[\s\S]*?<\/div>/);
   assert.equal([...html.matchAll(/<ul class="achievement-list">/g)].length, 2);
   assert.ok([...html.matchAll(/<ul class="achievement-list">[\s\S]*?<\/ul>/g)]
     .every((match) => [...match[0].matchAll(/<li /g)].length >= 3));
@@ -163,4 +214,59 @@ test("publishes crawl and security contracts", () => {
 test("links a local privacy-safe SVG favicon", () => {
   assert.match(html, /<link rel="icon" href="\/favicon\.svg" type="image\/svg\+xml">/);
   assert.match(favicon, /<svg[^>]+xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
+});
+
+test("prints Korean and English resumes on two A4 pages", {
+  skip: process.env.PRINT_AUDIT !== "1",
+}, async () => {
+  const root = new URL("..", import.meta.url);
+  const assets = new Map([
+    ["/", ["index.html", "text/html; charset=utf-8"]],
+    ["/index.html", ["index.html", "text/html; charset=utf-8"]],
+    ["/styles.css", ["styles.css", "text/css; charset=utf-8"]],
+    ["/app.js", ["app.js", "text/javascript; charset=utf-8"]],
+    ["/favicon.svg", ["favicon.svg", "image/svg+xml"]],
+  ]);
+  const server = createServer(async (request, response) => {
+    const asset = assets.get(new URL(request.url, "http://127.0.0.1").pathname);
+    if (!asset) {
+      response.writeHead(404).end();
+      return;
+    }
+    response.writeHead(200, { "content-type": asset[1] });
+    response.end(await readFile(new URL(asset[0], root)));
+  });
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+
+  const auditDirectory = await mkdtemp(join(tmpdir(), "resume-print-audit-"));
+  const pdfPath = (language) => join(auditDirectory, `resume-${language}.pdf`);
+  const pageCount = (path) => Number(
+    execFileSync("pdfinfo", [path], { encoding: "utf8" }).match(/^Pages:\s+(\d+)/m)?.[1],
+  );
+  const globalModules = execFileSync("npm", ["root", "--global"], { encoding: "utf8" }).trim();
+  const playwrightPath = join(globalModules, "@playwright/cli/node_modules/playwright-core/index.mjs");
+  const { chromium } = await import(pathToFileURL(playwrightPath));
+  let browser;
+
+  try {
+    const { port } = server.address();
+    browser = await chromium.launch({ channel: "chrome", headless: true });
+    const page = await browser.newPage();
+    await page.goto(`http://127.0.0.1:${port}`);
+    await page.pdf({ path: pdfPath("ko"), preferCSSPageSize: true, printBackground: true });
+    await page.locator("#language-toggle").click();
+    await page.pdf({ path: pdfPath("en"), preferCSSPageSize: true, printBackground: true });
+
+    assert.deepEqual(
+      { ko: pageCount(pdfPath("ko")), en: pageCount(pdfPath("en")) },
+      { ko: 2, en: 2 },
+    );
+  } finally {
+    await browser?.close();
+    await new Promise((resolve) => server.close(resolve));
+    await rm(auditDirectory, { recursive: true, force: true });
+  }
 });
