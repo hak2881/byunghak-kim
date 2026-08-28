@@ -22,7 +22,7 @@ test("contains the approved semantic sections and identity", () => {
 });
 
 test("contains the verified backend evidence", () => {
-  for (const metric of ["7,732", "283", "4,857", "11", "235K+", "1,067"])
+  for (const metric of ["7,732", "283", "4,857", "11", "1,569", "2ms", "235,848", "0.04%", "1,067"])
     assert.match(html, new RegExp(metric.replace("+", "\\+")));
 });
 
@@ -34,11 +34,37 @@ test("does not expose disallowed personal data or unsupported ownership", () => 
 
 test("every translated element has Korean and English copy", () => {
   const nodes = [...html.matchAll(/<[^>]+data-i18n="[^"]+"[^>]*>/g)].map((m) => m[0]);
-  assert.ok(nodes.length >= 30);
+  assert.ok(nodes.length >= 65);
   for (const node of nodes) {
     assert.match(node, /data-ko="[^"]+"/);
     assert.match(node, /data-en="[^"]+"/);
   }
+});
+
+test("shows detailed contributions for both experience entries", () => {
+  assert.equal([...html.matchAll(/<ul class="achievement-list">/g)].length, 2);
+  assert.ok([...html.matchAll(/<ul class="achievement-list">[\s\S]*?<\/ul>/g)]
+    .every((match) => [...match[0].matchAll(/<li /g)].length >= 3));
+});
+
+test("explains every selected system with details and technologies", () => {
+  for (const id of ["commerce-backend", "ledger-platform", "ai-platform", "erp-integration"]) {
+    const card = html.match(new RegExp(`<article class="system-card" id="${id}">([\\s\\S]*?)<\\/article>`))?.[0] ?? "";
+    assert.match(card, /class="system-details"/);
+    assert.ok([...card.matchAll(/<li /g)].length >= 3);
+    assert.match(card, /class="tag-list"/);
+  }
+});
+
+test("links the expanded public engineering case studies", () => {
+  for (const repository of [
+    "reliable-backend-patterns",
+    "commerce-backend-msa",
+    "loyalty-ledger-systems",
+    "erp-integration-patterns",
+    "ai-experience-platform",
+    "aws-production-operations",
+  ]) assert.match(html, new RegExp(`https://github\\.com/hak2881/${repository}`));
 });
 
 test("uses the specified public navigation and approved location", () => {
@@ -71,6 +97,32 @@ test("implements focus, responsive, reduced-motion, and print contracts", () => 
   assert.match(css, /@media\s+print/);
   assert.match(css, /\.skip-link/);
   assert.match(css, /\.sr-only/);
+});
+
+test("styles detailed content for reading and compact printing", () => {
+  for (const selector of [
+    "achievement-list",
+    "system-details",
+    "tag-list",
+    "public-grid",
+    "public-card",
+    "section-intro",
+  ]) {
+    assert.match(css, new RegExp(`\\.${selector}\\s*\\{`));
+  }
+
+  assert.match(
+    css,
+    /\.public-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*1fr\)/s,
+  );
+  assert.match(css, /\.tag-list\s*\{[^}]*display:\s*flex[^}]*flex-wrap:\s*wrap/s);
+
+  const printRules = css.slice(css.indexOf("@media print"));
+  assert.match(printRules, /body\s*\{[^}]*font-size:\s*8\.5pt/s);
+  assert.match(
+    printRules,
+    /\.public-grid\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*1fr\)/s,
+  );
 });
 
 test("keeps the sole visible identity in print while hiding header controls", () => {

@@ -36,20 +36,35 @@ nav a { color: var(--muted); font-size: .84rem; font-weight: 700; text-decoratio
 button { min-height: 40px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink); padding: 0 14px; font: inherit; font-size: .78rem; font-weight: 750; cursor: pointer; }
 .eyebrow, .resume-section > h2 { color: var(--accent); font-size: .78rem; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
 .hero-summary { max-width: 720px; color: var(--muted); font-size: clamp(1rem, 1.5vw, 1.2rem); }
-.hero-links, .footer-links, .stack-groups { display: flex; flex-wrap: wrap; gap: 12px 24px; margin-top: 28px; }
+.hero-links, .footer-links { display: flex; flex-wrap: wrap; gap: 12px 24px; margin-top: 28px; }
 .timeline-item { padding-bottom: 28px; }
 .period { color: var(--muted); font-size: .78rem; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
 .system-card h3 { margin-top: 0; }
 .system-card p, .timeline-item p, .public-work p { color: var(--muted); }
+.section-intro { max-width: 760px; margin: 0 0 24px; color: var(--muted); }
+.achievement-list { margin: 16px 0 0; padding-left: 1.15rem; color: var(--muted); }
+.system-details { margin: 16px 0 0; padding-left: 1.15rem; color: var(--muted); }
+.achievement-list li + li, .system-details li + li { margin-top: 9px; }
+.system-summary { margin-bottom: 0; }
+.tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 0; padding: 0; list-style: none; }
 .tag { display: inline-flex; border-radius: 999px; background: var(--accent-soft); color: var(--accent); padding: 5px 9px; font-size: .72rem; font-weight: 750; }
+.public-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.public-card { padding: 20px; border: 1px solid var(--line); border-radius: 12px; }
+.public-card h3 { margin: 0; font-size: 1rem; }
+.public-card a { text-decoration-thickness: 1px; }
+.public-card p { margin-bottom: 0; color: var(--muted); }
+.stack-groups { display: grid; gap: 14px; }
+.stack-groups p { display: grid; grid-template-columns: 180px 1fr; gap: 20px; margin: 0; padding-bottom: 14px; border-bottom: 1px solid var(--line); color: var(--muted); }
+.stack-groups strong { color: var(--ink); }
 footer { color: var(--muted); font-size: .82rem; }
 
 @media (max-width: 720px) {
   .site-header { grid-template-columns: 1fr auto; }
   .site-header nav { display: none; }
-  .evidence, .system-grid { grid-template-columns: 1fr; }
+  .evidence, .system-grid, .public-grid { grid-template-columns: 1fr; }
   .evidence article { border-right: 0; border-bottom: 1px solid var(--line); }
   .resume-section { grid-template-columns: 1fr; gap: 24px; padding-block: 48px; }
+  .stack-groups p { grid-template-columns: 1fr; gap: 4px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -58,12 +73,35 @@ footer { color: var(--muted); font-size: .82rem; }
 }
 
 @media print {
-  @page { size: A4; margin: 14mm; }
-  .site-header { position: static; max-width: none; padding: 0 0 6mm; background: none; }
+  @page { size: A4; margin: 10mm; }
+  body { color: #000; font-size: 8.5pt; line-height: 1.35; }
+  .site-header { position: static; max-width: none; padding: 0 0 3mm; background: none; }
   .site-header nav, .header-actions, .skip-link, button { display: none !important; }
-  .hero, .resume-section, footer { max-width: none; padding: 10mm 0; }
-  .system-card, .timeline-item { break-inside: avoid; }
+  .hero, .resume-section, footer { max-width: none; padding: 5mm 0; }
+  .hero h1 { margin-block: 2mm 3mm; font-size: 25pt; }
+  .hero-summary { font-size: 9pt; }
+  .hero-links, .footer-links { margin-top: 3mm; }
+  .evidence article { padding: 3mm; }
+  .evidence strong { font-size: 14pt; }
+  .resume-section { grid-template-columns: 27mm 1fr; gap: 5mm; }
+  .timeline-item { padding-bottom: 3mm; }
+  .section-intro { margin-bottom: 3mm; }
+  .achievement-list { margin-top: 2mm; }
+  .system-details { margin-top: 2mm; font-size: 7.7pt; }
+  .achievement-list li + li, .system-details li + li { margin-top: 1mm; }
+  .system-grid { gap: 3mm; }
+  .system-card { padding: 3mm; }
+  .system-card h3 { margin-bottom: 1mm; }
+  .system-card p { margin-block: 1mm; }
+  .tag-list { margin-top: 2mm; gap: 1mm; }
+  .tag { padding: .8mm 1.5mm; font-size: 6.5pt; }
+  .public-grid { grid-template-columns: repeat(3, 1fr); gap: 2mm; }
+  .public-card { padding: 2.5mm; }
+  .public-card h3 { font-size: 8pt; }
+  .public-card p { margin-top: 1mm; font-size: 7pt; }
+  .stack-groups { gap: 1.5mm; }
+  .stack-groups p { grid-template-columns: 35mm 1fr; gap: 3mm; padding-bottom: 1.5mm; }
+  .system-card, .timeline-item, .public-card { break-inside: avoid; }
   a { text-decoration: none; }
-  body { color: #000; }
   .evidence strong, .eyebrow, .resume-section > h2 { color: #174c9f; }
 }
