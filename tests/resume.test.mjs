@@ -36,14 +36,33 @@ test("does not expose disallowed personal data or unsupported ownership", () => 
   assert.doesNotMatch(html, /생년월일|date of birth|고등학교|high school|나이|\bage\b|사진|\bphoto\b/i);
   assert.doesNotMatch(html, /젠테|gente|슬랙|slack|private repo|비공개 저장소/i);
   assert.doesNotMatch(html, /arn:aws|amazonaws\.com|\b\d{12}\b|\b(?:\d{1,3}\.){3}\d{1,3}\b/i);
-  assert.doesNotMatch(html, /스토어프론트[^<"]{0,100}(?:설계|구축|개발|운영|주도)|storefront[^<"]{0,100}(?:owned|led|architected|designed|built|operated)/i);
-  assert.match(html, /호스팅형 스토어프론트의 구조와 API 데이터 흐름을 이해하고, 짧은 기간 필터 상태와 API 연동 수정을 지원했습니다/);
-  assert.match(html, /Understood the hosted storefront structure and API data flow, providing short-term support for filter state and API integration changes/);
+  const approvedStorefrontKo = "호스팅형 스토어프론트의 구조와 API 데이터 흐름을 이해하고, 짧은 기간 필터 상태와 API 연동 수정을 지원했습니다.";
+  const approvedStorefrontEn = "Understood the hosted storefront structure and API data flow, providing short-term support for filter state and API integration changes.";
+  assert.ok(html.includes(approvedStorefrontKo));
+  assert.ok(html.includes(approvedStorefrontEn));
+  assert.doesNotMatch(
+    html
+      .replaceAll(approvedStorefrontKo, "")
+      .replaceAll(approvedStorefrontEn, "")
+      .replaceAll("system.commerce.storefront", ""),
+    /스토어프론트|storefront/i,
+  );
 
   const externalUrls = [...html.matchAll(/https:\/\/[^"'\s<]+/g)].map((match) => match[0]);
+  const approvedUrls = new Set([
+    "https://byunghak-kim.vercel.app/",
+    "https://byunghak-kim.vercel.app/og.png",
+    "https://github.com/hak2881",
+    "https://github.com/hak2881/reliable-backend-patterns",
+    "https://github.com/hak2881/commerce-backend-msa",
+    "https://github.com/hak2881/loyalty-ledger-systems",
+    "https://github.com/hak2881/erp-integration-patterns",
+    "https://github.com/hak2881/ai-experience-platform",
+    "https://github.com/hak2881/aws-production-operations",
+  ]);
   assert.ok(externalUrls.length > 0);
   for (const url of externalUrls) {
-    assert.match(url, /^https:\/\/(?:byunghak-kim\.vercel\.app(?:\/og\.png|\/)?|github\.com\/hak2881(?:\/[a-z0-9-]+)?)$/);
+    assert.ok(approvedUrls.has(url), `unapproved public URL: ${url}`);
   }
 });
 
@@ -92,7 +111,8 @@ test("every translated element has Korean and English copy", () => {
 
 test("shows detailed contributions for both experience entries", () => {
   const work = html.match(/<section id="work"[\s\S]*?<\/section>/)?.[0] ?? "";
-  assert.match(work, /<div class="timeline">[\s\S]*?<\/div>/);
+  const timeline = work.match(/<div class="timeline">([\s\S]*?)<\/div>/)?.[0] ?? "";
+  assert.equal([...timeline.matchAll(/<article class="timeline-item">/g)].length, 2);
   assert.equal([...html.matchAll(/<ul class="achievement-list">/g)].length, 2);
   assert.ok([...html.matchAll(/<ul class="achievement-list">[\s\S]*?<\/ul>/g)]
     .every((match) => [...match[0].matchAll(/<li /g)].length >= 3));
@@ -236,22 +256,23 @@ test("prints Korean and English resumes on two A4 pages", {
     response.writeHead(200, { "content-type": asset[1] });
     response.end(await readFile(new URL(asset[0], root)));
   });
-  await new Promise((resolve, reject) => {
-    server.once("error", reject);
-    server.listen(0, "127.0.0.1", resolve);
-  });
-
-  const auditDirectory = await mkdtemp(join(tmpdir(), "resume-print-audit-"));
-  const pdfPath = (language) => join(auditDirectory, `resume-${language}.pdf`);
-  const pageCount = (path) => Number(
-    execFileSync("pdfinfo", [path], { encoding: "utf8" }).match(/^Pages:\s+(\d+)/m)?.[1],
-  );
   const globalModules = execFileSync("npm", ["root", "--global"], { encoding: "utf8" }).trim();
   const playwrightPath = join(globalModules, "@playwright/cli/node_modules/playwright-core/index.mjs");
   const { chromium } = await import(pathToFileURL(playwrightPath));
+  let auditDirectory;
   let browser;
 
   try {
+    auditDirectory = await mkdtemp(join(tmpdir(), "resume-print-audit-"));
+    await new Promise((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(0, "127.0.0.1", resolve);
+    });
+
+    const pdfPath = (language) => join(auditDirectory, `resume-${language}.pdf`);
+    const pageCount = (path) => Number(
+      execFileSync("pdfinfo", [path], { encoding: "utf8" }).match(/^Pages:\s+(\d+)/m)?.[1],
+    );
     const { port } = server.address();
     browser = await chromium.launch({ channel: "chrome", headless: true });
     const page = await browser.newPage();
@@ -265,8 +286,14 @@ test("prints Korean and English resumes on two A4 pages", {
       { ko: 2, en: 2 },
     );
   } finally {
-    await browser?.close();
-    await new Promise((resolve) => server.close(resolve));
-    await rm(auditDirectory, { recursive: true, force: true });
+    await Promise.allSettled([
+      browser?.close(),
+      server.listening
+        ? new Promise((resolve) => server.close(resolve))
+        : Promise.resolve(),
+      auditDirectory
+        ? rm(auditDirectory, { recursive: true, force: true })
+        : Promise.resolve(),
+    ]);
   }
 });
