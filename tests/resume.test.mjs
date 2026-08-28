@@ -175,6 +175,13 @@ test("translates the hero role and current-role period", () => {
   assert.match(html, /<p class="period" data-i18n="work\.production\.period" data-ko="2025\.11 — 현재" data-en="2025\.11 — Present">2025\.11 — 현재<\/p>/);
 });
 
+test("includes the approved learning practice in both languages", () => {
+  assert.match(
+    html,
+    /data-i18n="principle\.learning" data-ko="공식 문서와 실행 계획을 바탕으로 작은 재현 환경에서 검증하고, 전후 수치와 실패 조건을 공개 가능한 GitHub 사례로 기록합니다\." data-en="I validate ideas from official documentation and execution plans in small reproducible environments, then document metrics and failure conditions as public GitHub case studies\."/,
+  );
+});
+
 test("implements focus, responsive, reduced-motion, and print contracts", () => {
   assert.match(css, /:focus-visible/);
   assert.match(css, /@media\s*\(max-width:\s*720px\)/);
